@@ -55,36 +55,59 @@ class AvailabilityController extends Controller
             ->orderBy('start_at')
             ->get();
 
-        $availableSlots = [];
+        // Get Blocked Periods for this day and professional
+        $blockedPeriods = \App\Models\BlockedPeriod::whereDate('start_at', '<=', $date)
+            ->whereDate('end_at', '>=', $date)
+            ->when($professionalId, function ($query) use ($professionalId) {
+                return $query->where('user_id', $professionalId);
+            })
+            ->get();
 
+        // Generate Slots
+        $slots = [];
         foreach ($businessHours as $hours) {
-            $startTime = strtotime($date . ' ' . $hours->start_time);
-            $endTime = strtotime($date . ' ' . $hours->end_time);
+            $start = strtotime($date . ' ' . $hours->start_time);
+            $end = strtotime($date . ' ' . $hours->end_time);
 
-            while ($startTime + ($duration * 60) <= $endTime) {
-                $slotEnd = $startTime + ($duration * 60);
-                
-                // Check collision
-                $isBooked = false;
+            while ($start + ($duration * 60) <= $end) {
+                $slotEnd = $start + ($duration * 60);
+                $slotStartString = date('Y-m-d H:i:s', $start);
+                $slotEndString = date('Y-m-d H:i:s', $slotEnd);
+
+                $isAvailable = true;
+
+                // Check Appointments overlap
                 foreach ($appointments as $appointment) {
-                    $apptStart = strtotime($appointment->start_at);
-                    $apptEnd = strtotime($appointment->end_at);
+                    $appStart = strtotime($appointment->start_at);
+                    $appEnd = strtotime($appointment->end_at);
 
-                    // Overlap logic: (StartA < EndB) and (EndA > StartB)
-                    if ($startTime < $apptEnd && $slotEnd > $apptStart) {
-                        $isBooked = true;
+                    if ($start < $appEnd && $slotEnd > $appStart) {
+                        $isAvailable = false;
                         break;
                     }
                 }
 
-                if (! $isBooked) {
-                    $availableSlots[] = date('H:i', $startTime);
+                // Check Blocked Periods overlap
+                if ($isAvailable) {
+                    foreach ($blockedPeriods as $block) {
+                        $blockStart = strtotime($block->start_at);
+                        $blockEnd = strtotime($block->end_at);
+
+                        if ($start < $blockEnd && $slotEnd > $blockStart) {
+                            $isAvailable = false;
+                            break;
+                        }
+                    }
                 }
 
-                $startTime += ($duration * 60);
+                if ($isAvailable) {
+                    $slots[] = date('H:i', $start);
+                }
+
+                $start += ($duration * 60);
             }
         }
 
-        return response()->json(['slots' => $availableSlots]);
+        return response()->json(['slots' => array_unique($slots)]);
     }
 }

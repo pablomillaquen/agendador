@@ -15,12 +15,45 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Admin
+        User::updateOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('test1234'), // Re-hashing just in case, or use existing if not changing
+                'role' => 'admin',
+                'color' => '#EF4444', // Red
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@admin.com',
-            'password' => 'test123',
-        ]);
+        // Coordinator
+        User::updateOrCreate(
+            ['email' => 'coordinator@admin.com'],
+            [
+                'name' => 'Coordinator User',
+                'password' => bcrypt('test1234'),
+                'role' => 'coordinator',
+                'color' => '#F59E0B', // Amber
+            ]
+        );
+
+        // Professionals
+        $professionals = [
+            ['name' => 'Dr. Smith', 'email' => 'smith@admin.com', 'color' => '#3B82F6'], // Blue
+            ['name' => 'Dra. Jones', 'email' => 'jones@admin.com', 'color' => '#10B981'], // Green
+            ['name' => 'Dr. House', 'email' => 'house@admin.com', 'color' => '#8B5CF6'], // Purple
+        ];
+
+        foreach ($professionals as $pro) {
+            User::updateOrCreate(
+                ['email' => $pro['email']],
+                [
+                    'name' => $pro['name'],
+                    'password' => bcrypt('test1234'),
+                    'role' => 'professional',
+                    'color' => $pro['color'],
+                ]
+            );
+        }
     }
 }

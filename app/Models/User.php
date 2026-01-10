@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'color',
+        'role',
     ];
 
     public function appointments()
@@ -32,6 +33,11 @@ class User extends Authenticatable
     public function businessHours()
     {
         return $this->hasMany(BusinessHour::class);
+    }
+
+    public function blockedPeriods()
+    {
+        return $this->hasMany(BlockedPeriod::class);
     }
 
     /**
