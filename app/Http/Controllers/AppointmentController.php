@@ -10,12 +10,19 @@ class AppointmentController extends Controller
     /**
      * Display a listing of the resource.
      */
+    /**
+     * Display a listing of the resource.
+     */
     public function index(Request $request)
     {
-        $query = \App\Models\Appointment::with('client');
+        $query = \App\Models\Appointment::with(['client', 'professional']);
 
         if ($request->has('client_id')) {
             $query->where('client_id', $request->client_id);
+        }
+
+        if ($request->has('professional_id')) {
+            $query->where('professional_id', $request->professional_id);
         }
 
         if ($request->has('date')) {
@@ -32,6 +39,7 @@ class AppointmentController extends Controller
     {
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
+            'professional_id' => 'required|exists:users,id',
             'start_at' => 'required|date|after:now',
             'end_at' => 'required|date|after:start_at',
             'status' => 'in:scheduled,canceled,completed',
@@ -39,8 +47,8 @@ class AppointmentController extends Controller
         ]);
 
         // Check for overlaps
-        if ($this->hasOverlap($validated['start_at'], $validated['end_at'])) {
-            return response()->json(['message' => 'The selected time slot is already booked.'], 409);
+        if ($this->hasOverlap($validated['start_at'], $validated['end_at'], null, $validated['professional_id'])) {
+            return response()->json(['message' => 'The selected time slot is already booked for this professional.'], 409);
         }
 
         return \App\Models\Appointment::create($validated);
@@ -51,7 +59,7 @@ class AppointmentController extends Controller
      */
     public function show(string $id)
     {
-        return \App\Models\Appointment::with('client')->findOrFail($id);
+        return \App\Models\Appointment::with(['client', 'professional'])->findOrFail($id);
     }
 
     /**
@@ -63,19 +71,21 @@ class AppointmentController extends Controller
 
         $validated = $request->validate([
             'client_id' => 'exists:clients,id',
+            'professional_id' => 'exists:users,id',
             'start_at' => 'date',
             'end_at' => 'date|after:start_at',
             'status' => 'in:scheduled,canceled,completed',
             'notes' => 'nullable|string',
         ]);
 
-        // Check for overlaps if dates are changing
-        if (isset($validated['start_at']) || isset($validated['end_at'])) {
+        // Check for overlaps if dates or professional are changing
+        if (isset($validated['start_at']) || isset($validated['end_at']) || isset($validated['professional_id'])) {
             $start = $validated['start_at'] ?? $appointment->start_at;
             $end = $validated['end_at'] ?? $appointment->end_at;
+            $professionalId = $validated['professional_id'] ?? $appointment->professional_id;
             
-            if ($this->hasOverlap($start, $end, $id)) {
-                 return response()->json(['message' => 'The selected time slot is already booked.'], 409);
+            if ($this->hasOverlap($start, $end, $id, $professionalId)) {
+                 return response()->json(['message' => 'The selected time slot is already booked for this professional.'], 409);
             }
         }
 
@@ -90,36 +100,17 @@ class AppointmentController extends Controller
     public function destroy(string $id)
     {
         $appointment = \App\Models\Appointment::findOrFail($id);
-        
-        // Soft logic: cancel instead of delete? MVP says delete is allowed but maybe set to canceled
-        // User requirements: "Eliminar cita". I'll delete it.
         $appointment->delete();
 
         return response()->noContent();
     }
 
-    private function hasOverlap($start, $end, $excludeId = null)
+    private function hasOverlap($start, $end, $excludeId = null, $professionalId = null)
     {
-        $query = \App\Models\Appointment::where('status', '!=', 'canceled')
-            ->where(function ($q) use ($start, $end) {
-                $q->whereBetween('start_at', [$start, $end])
-                  ->orWhereBetween('end_at', [$start, $end])
-                  ->orWhere(function ($q) use ($start, $end) {
-                      $q->where('start_at', '<', $start)
-                        ->where('end_at', '>', $end);
-                  });
-            });
-
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
-        }
-
-        // Refined overlap check: (StartA < EndB) and (EndA > StartB)
-        // The above whereBetween might be slightly inaccurate for exact boundaries.
-        // Let's use the standard formula:
-        // Overlap = (StartA < EndB) && (EndA > StartB)
-        // But in Eloquent:
         return \App\Models\Appointment::where('status', '!=', 'canceled')
+            ->when($professionalId, function ($q) use ($professionalId) {
+                return $q->where('professional_id', $professionalId);
+            })
             ->where(function ($q) use ($start, $end) {
                 $q->where('start_at', '<', $end)
                   ->where('end_at', '>', $start);

@@ -51,6 +51,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Calendario
                                 </NavLink>
+                                <NavLink
+                                    :href="route('admin.business-hours.index')"
+                                    :active="route().current('admin.business-hours.index')"
+                                >
+                                    Horarios
+                                </NavLink>
                             </div>
                         </div>
 
@@ -169,6 +175,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('calendar.index')"
                         >
                             Calendario
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('admin.business-hours.index')"
+                            :active="route().current('admin.business-hours.index')"
+                        >
+                            Horarios
                         </ResponsiveNavLink>
                     </div>
 

@@ -19,9 +19,53 @@ const calendarOptions = {
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     events: props.events,
-    editable: false, // For MVP read only via manual edit? Or drag drop future.
-    selectable: true, 
+    editable: true, 
+    selectable: true,
+    eventDrop: handleEventDrop,
+    eventResize: handleEventResize,
 };
+
+function handleEventDrop(info) {
+    const event = info.event;
+    updateAppointment(event);
+}
+
+function handleEventResize(info) {
+    const event = info.event;
+    updateAppointment(event);
+}
+
+function updateAppointment(event) {
+    // Format dates to MySQL format YYYY-MM-DD HH:mm:ss
+    // FullCalendar dates are Date objects.
+    // We need to adjust for timezone or send ISO and handle in backend? 
+    // Laravel expects Y-m-d H:i:s usually.
+    
+    // Simple helper:
+    const formatDate = (date) => {
+        if (!date) return null;
+        // Adjust for local time to avoid UTC shift issues if not handled carefully
+        // Or better, use toISOString() and ensuring backend handles it.
+        // Let's use a simple manual format to local string
+        const offset = date.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(date - offset)).toISOString().slice(0, 19).replace('T', ' ');
+        return localISOTime;
+    };
+
+    axios.patch(route('appointments.update', event.id), {
+        start_at: formatDate(event.start),
+        end_at: formatDate(event.end),
+        _method: 'PATCH' // sometimes needed if using post but here we use patch
+    })
+    .then(response => {
+        // notification success
+        console.log('Update success');
+    })
+    .catch(error => {
+        console.error('Update failed', error);
+        info.revert(); // Revert visual change
+    });
+}
 
 </script>
 
