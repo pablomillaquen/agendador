@@ -21,4 +21,11 @@ class Appointment extends Model
     {
         return $this->belongsTo(User::class, 'professional_id');
     }
+    protected function casts(): array
+    {
+        return [
+            'start_at' => 'datetime',
+            'end_at' => 'datetime',
+        ];
+    }
 }

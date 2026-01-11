@@ -46,7 +46,7 @@ const showingNavigationDropdown = ref(false);
                                     Calendario
                                 </NavLink>
                                 <NavLink
-                                    v-if="['admin', 'coordinator', 'professional'].includes($page.props.auth.user.role)"
+                                    v-if="['admin', 'coordinator', 'professional'].includes($page.props.auth.user?.role)"
                                     :href="route('admin.clients.index')"
                                     :active="route().current('admin.clients.*')"
                                 >
@@ -59,14 +59,14 @@ const showingNavigationDropdown = ref(false);
                                     Horarios
                                 </NavLink>
                                 <NavLink
-                                    v-if="['admin', 'coordinator'].includes($page.props.auth.user.role)"
+                                    v-if="['admin', 'coordinator'].includes($page.props.auth.user?.role)"
                                     :href="route('admin.reports.index')"
                                     :active="route().current('admin.reports.index')"
                                 >
                                     Reportes
                                 </NavLink>
                                 <NavLink
-                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    v-if="$page.props.auth.user?.role === 'admin'"
                                     :href="route('users.index')"
                                     :active="route().current('users.index') || route().current('users.create') || route().current('users.edit')"
                                 >
@@ -186,7 +186,7 @@ const showingNavigationDropdown = ref(false);
                             Calendario
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            v-if="['admin', 'coordinator', 'professional'].includes($page.props.auth.user.role)"
+                            v-if="['admin', 'coordinator', 'professional'].includes($page.props.auth.user?.role)"
                             :href="route('admin.clients.index')"
                             :active="route().current('admin.clients.*')"
                         >
@@ -199,14 +199,14 @@ const showingNavigationDropdown = ref(false);
                             Horarios
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            v-if="['admin', 'coordinator'].includes($page.props.auth.user.role)"
+                            v-if="['admin', 'coordinator'].includes($page.props.auth.user?.role)"
                             :href="route('admin.reports.index')"
                             :active="route().current('admin.reports.index')"
                         >
                             Reportes
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            v-if="$page.props.auth.user.role === 'admin'"
+                            v-if="$page.props.auth.user?.role === 'admin'"
                             :href="route('users.index')"
                             :active="route().current('users.index') || route().current('users.create') || route().current('users.edit')"
                         >
@@ -248,7 +248,7 @@ const showingNavigationDropdown = ref(false);
             <!-- Page Heading -->
             <header
                 class="bg-white shadow dark:bg-gray-800"
-                v-if="$slots.header"
+                v-if="!!$slots.header"
             >
                 <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     <slot name="header" />

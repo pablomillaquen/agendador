@@ -47,6 +47,15 @@ const downloadWeeklyPdf = () => {
     window.location.href = route('admin.reports.weekly-pdf') + '?' + params.toString();
 };
 
+const downloadFilteredPdf = () => {
+    const params = new URLSearchParams({
+        professional_id: form.value.professional_id || '',
+        start_date: form.value.start_date || '',
+        end_date: form.value.end_date || ''
+    });
+    window.location.href = route('admin.reports.filtered-pdf') + '?' + params.toString();
+};
+
 const formatDateTime = (dateTime) => {
     return new Date(dateTime).toLocaleString('es-CL', {
         day: '2-digit',
@@ -84,13 +93,16 @@ const getStatusLabel = (status) => {
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Reportes de Citas</h2>
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Reportes de Citas</h2>
                 <div class="space-x-2">
                     <button @click="downloadDailyPdf" class="bg-gray-800 text-white px-4 py-2 rounded text-sm hover:bg-gray-700">
-                        PDF Diario
+                        Agenda Diaria
                     </button>
-                    <button @click="downloadWeeklyPdf" class="bg-primary text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-                        PDF Semanal
+                    <button @click="downloadWeeklyPdf" class="bg-gray-600 text-white px-4 py-2 rounded text-sm hover:bg-gray-500">
+                        Agenda Semanal
+                    </button>
+                    <button @click="downloadFilteredPdf" class="bg-primary text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                        PDF Filtrado
                     </button>
                 </div>
             </div>

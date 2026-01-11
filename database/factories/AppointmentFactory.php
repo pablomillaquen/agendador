@@ -16,11 +16,16 @@ class AppointmentFactory extends Factory
      */
     public function definition(): array
     {
-        $start = fake()->dateTimeBetween('now', '+1 month');
+        $date = fake()->dateTimeBetween('now', '+1 month');
+        $hour = rand(9, 16);
+        $minute = [0, 15, 30, 45][rand(0, 3)];
+        
+        $start = \Carbon\Carbon::instance($date)->setHour($hour)->setMinute($minute)->setSecond(0);
+        
         return [
             'client_id' => \App\Models\Client::factory(),
             'start_at' => $start,
-            'end_at' => (clone $start)->modify('+30 minutes'),
+            'end_at' => (clone $start)->addMinutes(30),
             'status' => 'scheduled',
             'notes' => fake()->sentence(),
         ];

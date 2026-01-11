@@ -74,9 +74,6 @@ class CalendarController extends Controller
             'professionals' => $professionals,
             'clients' => \App\Models\Client::orderBy('name')->get(['id', 'name']),
             'selectedProfessionalId' => (int)$selectedProfessionalId,
-            'auth' => [
-                'user' => $user
-            ]
         ]);
     }
 }

@@ -6,7 +6,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Modal from '@/Components/Modal.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -38,7 +38,7 @@ const changeProfessional = () => {
 };
 
 // Calendar Logic
-const calendarOptions = {
+const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
     locale: esLocale,
@@ -54,7 +54,7 @@ const calendarOptions = {
     eventDrop: handleEventDrop,
     eventResize: handleEventResize,
     eventClick: handleEventClick,
-};
+}));
 
 // Helper for date formatting
 const formatDate = (date) => {
@@ -166,6 +166,11 @@ const saveAppointment = () => {
     });
 };
 
+const getClientPhone = (clientId) => {
+    const client = props.clients.find(c => c.id === clientId);
+    return client ? client.phone : null;
+};
+
 
 </script>
 
@@ -179,11 +184,11 @@ const saveAppointment = () => {
                 
                 <div class="flex items-center gap-4">
                     <!-- Professional Selector -->
-                    <div v-if="props.professionals.length > 0">
+                    <div v-if="props.professionals && props.professionals.length > 0">
                         <select 
                             v-model="selectedProfessional"
                             @change="changeProfessional"
-                            class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+                            class="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 text-sm"
                         >
                             <option v-for="pro in props.professionals" :key="pro.id" :value="pro.id">
                                 {{ pro.name }}
@@ -268,9 +273,22 @@ const saveAppointment = () => {
         <!-- Manual Appointment Modal -->
         <Modal :show="showAppointmentModal" @close="closeAppointmentModal">
             <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    Nueva Cita Manual
-                </h2>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                        Nueva Cita Manual
+                    </h2>
+                    
+                    <a v-if="appointmentForm.client_id && getClientPhone(appointmentForm.client_id)" 
+                       :href="route('conversations.show', getClientPhone(appointmentForm.client_id))"
+                       target="_blank"
+                       class="text-sm text-green-600 hover:underline flex items-center gap-1"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        Ver conversación
+                    </a>
+                </div>
 
                 <div class="mt-6 space-y-4">
                     <div>

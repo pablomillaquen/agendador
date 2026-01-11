@@ -40,7 +40,7 @@ const getRoleLabel = (role) => {
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Gestión de Usuarios</h2>
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Gestión de Usuarios</h2>
                 <Link
                     :href="route('users.create')"
                     class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"

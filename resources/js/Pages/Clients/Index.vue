@@ -29,11 +29,13 @@ const deleteClient = (id) => {
     <Head title="Clientes" />
 
     <AuthenticatedLayout>
+        
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Clientes</h2>
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Clientes</h2>
+                
                 <Link
-                    v-if="['admin', 'coordinator'].includes($page.props.auth.user.role)"
+                    v-if="$page.props.auth.user?.role === 'admin' || $page.props.auth.user?.role === 'coordinator'"
                     :href="route('admin.clients.create')"
                     class="inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg"
                 >
@@ -44,7 +46,6 @@ const deleteClient = (id) => {
                 </Link>
             </div>
         </template>
-
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -74,6 +75,7 @@ const deleteClient = (id) => {
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.email || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.phone || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a v-if="client.phone" :href="route('conversations.show', client.phone)" target="_blank" class="text-green-600 hover:text-green-900 mr-3">Ver chat</a>
                                             <Link :href="route('admin.clients.edit', client.id)" class="text-primary hover:text-blue-800 mr-3">Editar</Link>
                                             <button @click="deleteClient(client.id)" class="text-red-600 hover:text-red-900">Eliminar</button>
                                         </td>

@@ -80,4 +80,32 @@ class ReportingController extends Controller
 
         return $pdf->download("agenda-semanal-{$user->name}-{$startOfWeek->toDateString()}.pdf");
     }
+    public function filteredPdf(Request $request)
+    {
+        $userId = $request->input('professional_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $professional = $userId ? User::find($userId) : null;
+
+        $appointments = Appointment::with(['client', 'professional'])
+            ->when($userId, fn($q) => $q->where('professional_id', $userId))
+            ->when($startDate, fn($q) => $q->whereDate('start_at', '>=', $startDate))
+            ->when($endDate, fn($q) => $q->whereDate('start_at', '<=', $endDate))
+            ->orderBy('start_at')
+            ->get();
+
+        $pdf = Pdf::loadView('reports.filtered', [
+            'professional' => $professional,
+            'startDate' => $startDate ? Carbon::parse($startDate)->format('d/m/Y') : null,
+            'endDate' => $endDate ? Carbon::parse($endDate)->format('d/m/Y') : null,
+            'appointments' => $appointments
+        ]);
+
+        $fileName = 'reporte-citas';
+        if ($professional) $fileName .= '-' . str($professional->name)->slug();
+        if ($startDate) $fileName .= '-' . $startDate;
+        
+        return $pdf->download("{$fileName}.pdf");
+    }
 }

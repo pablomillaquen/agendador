@@ -29,6 +29,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/appointments', [\App\Http\Controllers\Admin\ReportingController::class, 'index'])->name('admin.reports.index');
     Route::get('/reports/pdf/daily', [\App\Http\Controllers\Admin\ReportingController::class, 'dailyPdf'])->name('admin.reports.daily-pdf');
     Route::get('/reports/pdf/weekly', [\App\Http\Controllers\Admin\ReportingController::class, 'weeklyPdf'])->name('admin.reports.weekly-pdf');
+    Route::get('/reports/pdf/filtered', [\App\Http\Controllers\Admin\ReportingController::class, 'filteredPdf'])->name('admin.reports.filtered-pdf');
+
+    Route::get('/conversations/{sessionId}', [\App\Http\Controllers\ConversationController::class, 'show'])
+        ->name('conversations.show')
+        ->middleware('auth');
 
     Route::post('/appointments', [\App\Http\Controllers\Admin\AppointmentController::class, 'store'])->name('admin.appointments.store');
 });
