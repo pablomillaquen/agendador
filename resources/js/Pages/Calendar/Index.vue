@@ -21,6 +21,7 @@ const props = defineProps({
     },
     selectedProfessionalId: Number,
     auth: Object,
+    clients: Array,
 });
 
 // Professional Selector Logic
@@ -49,6 +50,7 @@ const calendarOptions = {
     events: props.events,
     editable: true, 
     selectable: true,
+    select: handleSelect,
     eventDrop: handleEventDrop,
     eventResize: handleEventResize,
     eventClick: handleEventClick,
@@ -129,13 +131,41 @@ const saveBlock = () => {
     blockForm.post(route('blocked-periods.store'), {
         onSuccess: () => {
             closeBlockModal();
-            // Refresh events -> Inertia automatic reload if preserved state isn't blocking deep props
-            // Actually router.reload() might be needed or just let Inertia handle it.
-            // But we used a form post which reloads the page content by default.
-            // So events should update.
         }
     });
 };
+
+// Manual Appointment Modal Logic
+const showAppointmentModal = ref(false);
+const appointmentForm = useForm({
+    client_id: '',
+    professional_id: props.selectedProfessionalId,
+    start_at: '',
+    end_at: '',
+    notes: '',
+    status: 'scheduled',
+});
+
+function handleSelect(info) {
+    appointmentForm.professional_id = selectedProfessional.value;
+    appointmentForm.start_at = info.startStr.slice(0, 16);
+    appointmentForm.end_at = info.endStr.slice(0, 16);
+    showAppointmentModal.value = true;
+}
+
+const closeAppointmentModal = () => {
+    showAppointmentModal.value = false;
+    appointmentForm.reset();
+};
+
+const saveAppointment = () => {
+    appointmentForm.post(route('admin.appointments.store'), {
+        onSuccess: () => {
+            closeAppointmentModal();
+        }
+    });
+};
+
 
 </script>
 
@@ -230,6 +260,101 @@ const saveBlock = () => {
                         @click="saveBlock"
                     >
                         Guardar Bloqueo
+                    </PrimaryButton>
+                </div>
+            </div>
+        </Modal>
+
+        <!-- Manual Appointment Modal -->
+        <Modal :show="showAppointmentModal" @close="closeAppointmentModal">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    Nueva Cita Manual
+                </h2>
+
+                <div class="mt-6 space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <InputLabel for="client_id" value="Seleccionar Cliente" />
+                            <Link :href="route('admin.clients.create')" class="text-xs text-primary hover:underline">
+                                + Crear Nuevo Cliente
+                            </Link>
+                        </div>
+                        <select
+                            id="client_id"
+                            v-model="appointmentForm.client_id"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+                            required
+                        >
+                            <option value="">Seleccione un cliente...</option>
+                            <option v-for="client in clients" :key="client.id" :value="client.id">
+                                {{ client.name }}
+                            </option>
+                        </select>
+                        <InputError class="mt-2" :message="appointmentForm.errors.client_id" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <InputLabel for="appt_start" value="Inicio" />
+                            <TextInput
+                                id="appt_start"
+                                type="datetime-local"
+                                class="mt-1 block w-full"
+                                v-model="appointmentForm.start_at"
+                                required
+                            />
+                            <InputError class="mt-2" :message="appointmentForm.errors.start_at" />
+                        </div>
+                        <div>
+                            <InputLabel for="appt_end" value="Fin" />
+                            <TextInput
+                                id="appt_end"
+                                type="datetime-local"
+                                class="mt-1 block w-full"
+                                v-model="appointmentForm.end_at"
+                                required
+                            />
+                            <InputError class="mt-2" :message="appointmentForm.errors.end_at" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <InputLabel for="appt_status" value="Estado" />
+                        <select
+                            id="appt_status"
+                            v-model="appointmentForm.status"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+                        >
+                            <option value="scheduled">Programada</option>
+                            <option value="confirmed">Confirmada</option>
+                            <option value="completed">Completada</option>
+                            <option value="cancelled">Cancelada</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <InputLabel for="appt_notes" value="Notas" />
+                        <TextInput
+                            id="appt_notes"
+                            type="text"
+                            class="mt-1 block w-full"
+                            v-model="appointmentForm.notes"
+                            placeholder="Motivo de consulta, etc."
+                        />
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <SecondaryButton @click="closeAppointmentModal"> Cancelar </SecondaryButton>
+
+                    <PrimaryButton
+                        class="ml-3"
+                        :class="{ 'opacity-25': appointmentForm.processing }"
+                        :disabled="appointmentForm.processing"
+                        @click="saveAppointment"
+                    >
+                        Guardar Cita
                     </PrimaryButton>
                 </div>
             </div>

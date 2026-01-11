@@ -6,12 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -28,6 +23,14 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/business-hours', [\App\Http\Controllers\Admin\BusinessHourController::class, 'index'])->name('admin.business-hours.index');
     Route::post('/business-hours', [\App\Http\Controllers\Admin\BusinessHourController::class, 'update'])->name('admin.business-hours.update');
+
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    
+    Route::get('/reports/appointments', [\App\Http\Controllers\Admin\ReportingController::class, 'index'])->name('admin.reports.index');
+    Route::get('/reports/pdf/daily', [\App\Http\Controllers\Admin\ReportingController::class, 'dailyPdf'])->name('admin.reports.daily-pdf');
+    Route::get('/reports/pdf/weekly', [\App\Http\Controllers\Admin\ReportingController::class, 'weeklyPdf'])->name('admin.reports.weekly-pdf');
+
+    Route::post('/appointments', [\App\Http\Controllers\Admin\AppointmentController::class, 'store'])->name('admin.appointments.store');
 });
 
 require __DIR__.'/auth.php';

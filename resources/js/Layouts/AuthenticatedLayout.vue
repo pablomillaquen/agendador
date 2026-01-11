@@ -40,22 +40,37 @@ const showingNavigationDropdown = ref(false);
                                     Panel de Control
                                 </NavLink>
                                 <NavLink
-                                    :href="route('admin.clients.index')"
-                                    :active="route().current('admin.clients.index')"
-                                >
-                                    Clientes
-                                </NavLink>
-                                <NavLink
                                     :href="route('calendar.index')"
                                     :active="route().current('calendar.index')"
                                 >
                                     Calendario
                                 </NavLink>
                                 <NavLink
+                                    v-if="['admin', 'coordinator', 'professional'].includes($page.props.auth.user.role)"
+                                    :href="route('admin.clients.index')"
+                                    :active="route().current('admin.clients.*')"
+                                >
+                                    Clientes
+                                </NavLink>
+                                <NavLink
                                     :href="route('admin.business-hours.index')"
                                     :active="route().current('admin.business-hours.index')"
                                 >
                                     Horarios
+                                </NavLink>
+                                <NavLink
+                                    v-if="['admin', 'coordinator'].includes($page.props.auth.user.role)"
+                                    :href="route('admin.reports.index')"
+                                    :active="route().current('admin.reports.index')"
+                                >
+                                    Reportes
+                                </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('users.index')"
+                                    :active="route().current('users.index') || route().current('users.create') || route().current('users.edit')"
+                                >
+                                    Usuarios
                                 </NavLink>
                             </div>
                         </div>
@@ -165,22 +180,37 @@ const showingNavigationDropdown = ref(false);
                             Panel de Control
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            :href="route('admin.clients.index')"
-                            :active="route().current('admin.clients.index')"
-                        >
-                            Clientes
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
                             :href="route('calendar.index')"
                             :active="route().current('calendar.index')"
                         >
                             Calendario
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
+                            v-if="['admin', 'coordinator', 'professional'].includes($page.props.auth.user.role)"
+                            :href="route('admin.clients.index')"
+                            :active="route().current('admin.clients.*')"
+                        >
+                            Clientes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
                             :href="route('admin.business-hours.index')"
                             :active="route().current('admin.business-hours.index')"
                         >
                             Horarios
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="['admin', 'coordinator'].includes($page.props.auth.user.role)"
+                            :href="route('admin.reports.index')"
+                            :active="route().current('admin.reports.index')"
+                        >
+                            Reportes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user.role === 'admin'"
+                            :href="route('users.index')"
+                            :active="route().current('users.index') || route().current('users.create') || route().current('users.edit')"
+                        >
+                            Usuarios
                         </ResponsiveNavLink>
                     </div>
 

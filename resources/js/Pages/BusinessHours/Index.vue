@@ -1,71 +1,54 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     businessHours: Array,
+    professionals: Array,
+    selectedUserId: Number,
 });
 
 const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const selectedProfessionalId = ref(props.selectedUserId);
 
-// Map props to form state
-// If props.businessHours comes from DB (has id, start_time, etc.), we map it.
-// If it comes from the seed logic in controller (virtual), we also map it.
-// We need to merge with a full week structure if gaps exist, but controller logic did that.
+watch(selectedProfessionalId, (newId) => {
+    router.get(route('admin.business-hours.index'), { user_id: newId }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+});
 
 const form = useForm({
-    hours: props.businessHours.map(h => ({
-        day_of_week: h.day_of_week,
-        start_time: h.start_time ? h.start_time.slice(0, 5) : '',
-        end_time: h.end_time ? h.end_time.slice(0, 5) : '',
-        is_enabled: !!h.start_time, // if start_time exists, it's enabled by default logic
-    }))
+    user_id: props.selectedUserId,
+    hours: Array(7).fill(null).map((_, i) => {
+        const existing = props.businessHours.find(h => h.day_of_week === i);
+        return {
+            day_of_week: i,
+            start_time: existing?.start_time ? existing.start_time.slice(0, 5) : '09:00',
+            end_time: existing?.end_time ? existing.end_time.slice(0, 5) : '17:00',
+            is_enabled: !!existing?.start_time,
+        };
+    })
 });
 
-// Ensure we have all 7 days in order
-// The controller sorts by day_of_week, so iterating 0..6 matching index is checking logic.
-// But better safe:
-const weekDaysForm = ref(Array(7).fill(null).map((_, i) => {
-    const existing = form.hours.find(h => h.day_of_week === i);
-    return existing || {
-        day_of_week: i,
-        start_time: '09:00',
-        end_time: '17:00',
-        is_enabled: false
-    };
-}));
-
-// We replace form.hours with our reactive structure for submission
-// Actually, form.hours should be the source of truth.
-// Let's re-initialize form.hours to ensure 7 items properly ordered.
-form.hours = Array(7).fill(null).map((_, i) => {
-    const existing = props.businessHours.find(h => h.day_of_week === i);
-    return {
-        day_of_week: i,
-        start_time: existing?.start_time ? existing.start_time.slice(0, 5) : '09:00',
-        end_time: existing?.end_time ? existing.end_time.slice(0, 5) : '17:00',
-        is_enabled: !!existing?.start_time,
-    };
-});
+// Update form when props change (when professional is switched)
+watch(() => props.businessHours, (newHours) => {
+    form.user_id = props.selectedUserId;
+    form.hours = Array(7).fill(null).map((_, i) => {
+        const existing = newHours.find(h => h.day_of_week === i);
+        return {
+            day_of_week: i,
+            start_time: existing?.start_time ? existing.start_time.slice(0, 5) : '09:00',
+            end_time: existing?.end_time ? existing.end_time.slice(0, 5) : '17:00',
+            is_enabled: !!existing?.start_time,
+        };
+    });
+}, { deep: true });
 
 const submit = () => {
-    // Filter out disabled days or send nulls?
-    // Controller logic: "if (!empty($hour['start_time'])...)"
-    // So if disabled, we can clear times or just send them and let controller ignore if we change logic?
-    // The controller currently: if !empty(start) && !empty(end) -> create.
-    // So if disabled, we should probably set start/end to null.
-    
-    // Better: Prepare data for submission
-    const dataToSubmit = form.hours.map(h => ({
-        day_of_week: h.day_of_week,
-        start_time: h.is_enabled ? h.start_time : null,
-        end_time: h.is_enabled ? h.end_time : null,
-    }));
-    
-    // Use a temp form or just modify form? modifying form might affect UI.
-    // Let's use form.transform
     form.transform((data) => ({
+        user_id: data.user_id,
         hours: data.hours.map(h => ({
             day_of_week: h.day_of_week,
             start_time: h.is_enabled ? h.start_time : null,
@@ -73,9 +56,6 @@ const submit = () => {
         }))
     })).post(route('admin.business-hours.update'), {
         preserveScroll: true,
-        onSuccess: () => {
-            // Toast?
-        },
     });
 };
 </script>
@@ -90,9 +70,27 @@ const submit = () => {
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                
+                <div v-if="professionals.length > 0" class="mb-6">
+                    <label for="professional-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Seleccionar Profesional</label>
+                    <select 
+                        id="professional-selector" 
+                        v-model="selectedProfessionalId"
+                        class="mt-1 block w-full md:w-1/3 border-gray-300 focus:border-primary focus:ring-primary rounded-md shadow-sm"
+                    >
+                        <option v-for="prof in professionals" :key="prof.id" :value="prof.id">
+                            {{ prof.name }} ({{ prof.role }})
+                        </option>
+                    </select>
+                </div>
+
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         
+                        <div class="mb-4 text-lg font-medium">
+                            Configurando horario para: {{ professionals.find(p => p.id === selectedProfessionalId)?.name || $page.props.auth.user.name }}
+                        </div>
+
                         <form @submit.prevent="submit" class="space-y-4">
                             <div v-for="(day, index) in form.hours" :key="day.day_of_week" class="flex items-center space-x-4 border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
                                 <div class="w-32 flex items-center">

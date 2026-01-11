@@ -4,48 +4,78 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Inertia\Inertia;
 
 class BusinessHourController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $businessHours = auth()->user()->businessHours()->orderBy('day_of_week')->get();
+        $userId = $request->input('user_id', auth()->id());
         
-        // If no hours, seed defaults provided in frontend or here? 
-        // Let's return empty and handle in frontend or seed basic 0-6 days.
+        // Authorization check: only admin/coordinator can see other users' hours
+        if ($userId != auth()->id() && !in_array(auth()->user()->role, ['admin', 'coordinator'])) {
+            abort(403);
+        }
+
+        $user = User::findOrFail($userId);
+        $businessHours = $user->businessHours()->orderBy('day_of_week')->get();
+        
         if ($businessHours->isEmpty()) {
             $days = range(0, 6); // 0=Sunday
             $businessHours = collect($days)->map(function($day) {
                 return [
                     'day_of_week' => $day,
-                    'start_time' => '09:00', // Default
+                    'start_time' => '09:00',
                     'end_time' => '17:00',
-                    'is_enabled' => false, // Virtual attribute for frontend
+                    'is_enabled' => false,
                 ];
             });
+        } else {
+            // Ensure all 7 days are present even if some aren't in DB
+            $days = range(0, 6);
+            $existingDays = $businessHours->pluck('day_of_week')->toArray();
+            $missingDays = array_diff($days, $existingDays);
+            
+            foreach ($missingDays as $day) {
+                $businessHours->push((object)[
+                    'day_of_week' => $day,
+                    'start_time' => '09:00',
+                    'end_time' => '17:00',
+                    'is_enabled' => false,
+                ]);
+            }
+            $businessHours = $businessHours->sortBy('day_of_week')->values();
         }
 
-        return \Inertia\Inertia::render('BusinessHours/Index', [
-            'businessHours' => $businessHours
+        return Inertia::render('BusinessHours/Index', [
+            'businessHours' => $businessHours,
+            'selectedUserId' => (int)$userId,
+            'professionals' => in_array(auth()->user()->role, ['admin', 'coordinator']) 
+                ? User::whereIn('role', ['professional', 'coordinator', 'admin'])->orderBy('name')->get(['id', 'name', 'role'])
+                : []
         ]);
     }
 
     public function update(Request $request)
     {
         $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
             'hours' => 'required|array',
             'hours.*.day_of_week' => 'required|integer|min:0|max:6',
             'hours.*.start_time' => 'nullable|date_format:H:i',
             'hours.*.end_time' => 'nullable|date_format:H:i|after:hours.*.start_time',
         ]);
 
-        $user = auth()->user();
-
-        // Strategy: syncing. Delete all and recreate? Or update existing?
-        // Simpler to delete all for this user and recreate based on input.
-        // Assuming frontend sends only "enabled" days or all days.
+        $userId = $validated['user_id'];
         
-        // Transaction
+        // Authorization check
+        if ($userId != auth()->id() && !in_array(auth()->user()->role, ['admin', 'coordinator'])) {
+            abort(403);
+        }
+
+        $user = User::findOrFail($userId);
+
         \Illuminate\Support\Facades\DB::transaction(function () use ($user, $validated) {
             $user->businessHours()->delete();
             

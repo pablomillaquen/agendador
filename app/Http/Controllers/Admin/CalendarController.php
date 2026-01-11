@@ -72,6 +72,7 @@ class CalendarController extends Controller
         return \Inertia\Inertia::render('Calendar/Index', [
             'events' => $appointmentEvents->concat($blockedEvents),
             'professionals' => $professionals,
+            'clients' => \App\Models\Client::orderBy('name')->get(['id', 'name']),
             'selectedProfessionalId' => (int)$selectedProfessionalId,
             'auth' => [
                 'user' => $user

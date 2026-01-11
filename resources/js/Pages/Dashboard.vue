@@ -21,7 +21,23 @@ import { Head } from '@inertiajs/vue3';
                     class="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800"
                 >
                     <div class="p-6 text-gray-900 dark:text-gray-100">
-                        ¡Has iniciado sesión correctamente!
+                        <div class="flex justify-between items-center">
+                            <span>¡Has iniciado sesión correctamente!</span>
+                            <div class="space-x-4">
+                                <Link
+                                    :href="route('admin.clients.index')"
+                                    class="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 transition"
+                                >
+                                    Gestión de Clientes
+                                </Link>
+                                <Link
+                                    :href="route('calendar.index')"
+                                    class="bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-700 transition"
+                                >
+                                    Ir al Calendario
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
