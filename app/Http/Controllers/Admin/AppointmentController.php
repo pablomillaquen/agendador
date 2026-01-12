@@ -28,6 +28,7 @@ class AppointmentController extends Controller
     public function update(Request $request, Appointment $appointment)
     {
         $validated = $request->validate([
+            'professional_id' => 'sometimes|exists:users,id',
             'start_at' => 'sometimes|date',
             'end_at' => 'sometimes|date|after:start_at',
             'notes' => 'nullable|string',

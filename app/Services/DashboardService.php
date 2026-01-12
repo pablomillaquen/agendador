@@ -36,7 +36,7 @@ class DashboardService
             ->get();
 
         // Professionals Stats
-        $professionals = User::whereIn('role', ['professional', 'coordinator', 'admin'])
+        $professionals = User::whereIn('role', ['professional'])
             ->withCount(['appointments as appointments_today' => function ($query) use ($today) {
                 $query->whereDate('start_at', $today)->where('status', '!=', 'cancelled');
             }])

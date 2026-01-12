@@ -332,6 +332,21 @@ const getClientPhone = (clientId) => {
                         <InputError class="mt-2" :message="appointmentForm.errors.client_id" />
                     </div>
 
+                    <div v-if="$page.props.auth.user?.role === 'admin' || $page.props.auth.user?.role === 'coordinator'">
+                        <InputLabel for="professional_id" value="Asignar Profesional" />
+                        <select
+                            id="professional_id"
+                            v-model="appointmentForm.professional_id"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+                            required
+                        >
+                            <option v-for="pro in professionals" :key="pro.id" :value="pro.id">
+                                {{ pro.name }}
+                            </option>
+                        </select>
+                        <InputError class="mt-2" :message="appointmentForm.errors.professional_id" />
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <InputLabel for="appt_start" value="Inicio" />
