@@ -24,4 +24,22 @@ class AppointmentController extends Controller
 
         return redirect()->back()->with('success', 'Cita creada correctamente.');
     }
+
+    public function update(Request $request, Appointment $appointment)
+    {
+        $validated = $request->validate([
+            'start_at' => 'sometimes|date',
+            'end_at' => 'sometimes|date|after:start_at',
+            'notes' => 'nullable|string',
+            'status' => 'sometimes|in:scheduled,confirmed,cancelled,completed',
+        ]);
+
+        $appointment->update($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'appointment' => $appointment]);
+        }
+
+        return redirect()->back()->with('success', 'Cita actualizada correctamente.');
+    }
 }

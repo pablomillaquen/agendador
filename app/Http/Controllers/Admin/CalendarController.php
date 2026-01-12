@@ -47,6 +47,10 @@ class CalendarController extends Controller
                 'borderColor' => $appt->status === 'completed' ? '#10B981' : '#3B82F6',
                 'type' => 'appointment',
                 'editable' => true,
+                'client_id' => $appt->client_id,
+                'professional_id' => $appt->professional_id,
+                'status' => $appt->status,
+                'notes' => $appt->notes,
             ];
         });
 

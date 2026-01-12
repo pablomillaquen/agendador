@@ -103,8 +103,16 @@ function handleEventClick(info) {
             });
         }
     } else {
-        // Appointment details?
-        // alert('Cita de: ' + info.event.title);
+        const appt = info.event;
+        isEditing.value = true;
+        editingId.value = appt.id;
+        appointmentForm.client_id = appt.extendedProps.client_id;
+        appointmentForm.professional_id = appt.extendedProps.professional_id;
+        appointmentForm.start_at = formatDate(appt.start).slice(0, 16).replace(' ', 'T');
+        appointmentForm.end_at = formatDate(appt.end).slice(0, 16).replace(' ', 'T');
+        appointmentForm.notes = appt.extendedProps.notes || '';
+        appointmentForm.status = appt.extendedProps.status;
+        showAppointmentModal.value = true;
     }
 }
 
@@ -137,6 +145,8 @@ const saveBlock = () => {
 
 // Manual Appointment Modal Logic
 const showAppointmentModal = ref(false);
+const isEditing = ref(false);
+const editingId = ref(null);
 const appointmentForm = useForm({
     client_id: '',
     professional_id: props.selectedProfessionalId,
@@ -147,6 +157,8 @@ const appointmentForm = useForm({
 });
 
 function handleSelect(info) {
+    isEditing.value = false;
+    editingId.value = null;
     appointmentForm.professional_id = selectedProfessional.value;
     appointmentForm.start_at = info.startStr.slice(0, 16);
     appointmentForm.end_at = info.endStr.slice(0, 16);
@@ -159,11 +171,19 @@ const closeAppointmentModal = () => {
 };
 
 const saveAppointment = () => {
-    appointmentForm.post(route('admin.appointments.store'), {
-        onSuccess: () => {
-            closeAppointmentModal();
-        }
-    });
+    if (isEditing.value) {
+        appointmentForm.patch(route('admin.appointments.update', editingId.value), {
+            onSuccess: () => {
+                closeAppointmentModal();
+            }
+        });
+    } else {
+        appointmentForm.post(route('admin.appointments.store'), {
+            onSuccess: () => {
+                closeAppointmentModal();
+            }
+        });
+    }
 };
 
 const getClientPhone = (clientId) => {
@@ -275,7 +295,7 @@ const getClientPhone = (clientId) => {
             <div class="p-6">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                        Nueva Cita Manual
+                        {{ isEditing ? 'Editar Cita' : 'Nueva Cita Manual' }}
                     </h2>
                     
                     <a v-if="appointmentForm.client_id && getClientPhone(appointmentForm.client_id)" 
@@ -372,7 +392,7 @@ const getClientPhone = (clientId) => {
                         :disabled="appointmentForm.processing"
                         @click="saveAppointment"
                     >
-                        Guardar Cita
+                        {{ isEditing ? 'Actualizar Cita' : 'Guardar Cita' }}
                     </PrimaryButton>
                 </div>
             </div>
